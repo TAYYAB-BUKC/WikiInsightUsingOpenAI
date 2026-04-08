@@ -11,4 +11,11 @@
     <Folder Include="Models\" />
   </ItemGroup>
 
+<ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.4.1" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.4.1" />
+    <PackageReference Include="Pinecone.Client" Version="4.0.2" />
+  </ItemGroup>
+
 </Project>
