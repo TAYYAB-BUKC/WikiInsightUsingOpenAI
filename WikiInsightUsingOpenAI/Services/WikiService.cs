@@ -9,7 +9,7 @@ public class WikiService
     private readonly HttpClient client;
     private readonly string API_BASE_URL = "https://en.wikipedia.org/w/api.php";
     private readonly string WIKI_PAGEURL = "https://en.wikipedia.org/wiki/";
-    
+
     private JsonSerializerOptions? jsonOptions = new JsonSerializerOptions()
     {
         PropertyNameCaseInsensitive = true
@@ -71,5 +71,11 @@ public class WikiService
             Content: content,
             PageUrl: pageUrl
         );
+    }
+
+    public async Task<Article> GetWikipediaPageForTitle(string title, bool full = false)
+    {
+        var url = CreateWikipediaUrl(title, full);
+        return await GetWikipediaPage(url);
     }
 }
