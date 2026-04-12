@@ -36,5 +36,6 @@ public static class Startup
         builder.Services.AddSingleton<EmbeddingService>();
         builder.Services.AddSingleton<IndexingService>();
         builder.Services.AddSingleton<WikiService>();
+        builder.Services.AddSingleton<ArticleStoreService>();
     }
 }
