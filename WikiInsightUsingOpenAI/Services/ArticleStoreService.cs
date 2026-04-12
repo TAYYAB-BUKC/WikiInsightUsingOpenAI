@@ -10,7 +10,6 @@ public class ArticleStoreService
     {
         using var conn = new SqliteConnection($"Data Source={DbFile}");
         conn.Open();
-        conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             CREATE TABLE IF NOT EXISTS TBL_Articles(
@@ -18,7 +17,9 @@ public class ArticleStoreService
                 Title TEXT,
                 Content TEXT,
                 PageUrl TEXT
-            }";
+            )";
+        cmd.ExecuteNonQuery();
+        conn.Close();
     }
 
     public List<Article> GetArticles(IEnumerable<string> ids)
