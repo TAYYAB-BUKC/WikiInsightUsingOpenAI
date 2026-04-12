@@ -7,12 +7,14 @@ public class IndexingService
     private readonly IndexClient indexClient;
     private readonly WikiService wikiService;
     private readonly EmbeddingService embeddingService;
+    private readonly ArticleStoreService articleStoreService;
 
-    public IndexingService(IndexClient indexClient, WikiService wikiService, EmbeddingService embeddingService)
+    public IndexingService(IndexClient indexClient, WikiService wikiService, EmbeddingService embeddingService, ArticleStoreService articleStoreService)
     {
         this.indexClient = indexClient;
         this.wikiService = wikiService;
         this.embeddingService = embeddingService;
+        this.articleStoreService = articleStoreService;
     }
 
     public async Task BuildArticleIndex(string[] pageTitles)
@@ -36,6 +38,8 @@ public class IndexingService
             {
                 Vectors = [pineconeVector]
             });
+
+            articleStoreService.SaveArticle(wikiPage);
         }
     }
 }

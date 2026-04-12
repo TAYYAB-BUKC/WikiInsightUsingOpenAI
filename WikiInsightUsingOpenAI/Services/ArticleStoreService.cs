@@ -64,4 +64,22 @@ public class ArticleStoreService
         conn.Close();
         return articles;
     }
+
+    public void SaveArticle(Article article)
+    {
+        using var conn = new SqliteConnection($"Data Source={DbFile}");
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT OR REPLACE INTO TBL_Articles
+            (Id, Title, Content, PageUrl)
+            VALUES ($id, $title, $content, $pageUrl)";
+        cmd.Parameters.AddWithValue("$id", article.Id);
+        cmd.Parameters.AddWithValue("$title", article.Title);
+        cmd.Parameters.AddWithValue("$content", article.Content);
+        cmd.Parameters.AddWithValue("$pageUrl", article.PageUrl);
+
+        cmd.ExecuteNonQuery();
+        conn.Close();
+    }
 }
