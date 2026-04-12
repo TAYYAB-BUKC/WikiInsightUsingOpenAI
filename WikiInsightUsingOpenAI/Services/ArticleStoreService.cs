@@ -5,11 +5,11 @@ namespace WikiInsightUsingOpenAI.Services;
 
 public class ArticleStoreService
 {
-    private const string DbFile = "WikiInsight_ContentStore.db";
+    private static readonly string DbFile = Path.Combine(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\")), "ContentStore", "WikiInsight_ContentStore.db");
+
     static ArticleStoreService()
     {
         using var conn = new SqliteConnection($"Data Source={DbFile}");
-        conn.Open();
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
@@ -18,7 +18,9 @@ public class ArticleStoreService
                 Title TEXT,
                 Content TEXT,
                 PageUrl TEXT
-            }";
+            )";
+        cmd.ExecuteNonQuery();
+        conn.Close();
     }
 
     public List<Article> GetArticles(IEnumerable<string> ids)
