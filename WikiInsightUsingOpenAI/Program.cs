@@ -7,5 +7,5 @@ var builder = WebApplication.CreateBuilder(args);
 Startup.ConfigureServices(builder);
 var app = builder.Build();
 
-var indexingService = app.Services.GetRequiredService<IndexingService>();
-await indexingService.BuildArticleIndex(SourceData.LandmarkNames);
+// var indexingService = app.Services.GetRequiredService<IndexingService>();
+// await indexingService.BuildArticleIndex(SourceData.LandmarkNames);
