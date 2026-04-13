@@ -6,36 +6,13 @@
     <title>Search Demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .search-header { background: white; padding: 20px 0; border-bottom: 1px solid #e9ecef; }
-        
-        /* Matching the image style */
-        .search-input {
-            border-radius: 12px 0 0 12px !important;
-            background-color: #f1f3f4;
-            border: none;
-            padding: 12px 20px;
-        }
-        .search-btn {
-            border-radius: 0 12px 12px 0 !important;
-            padding: 0 30px;
-            font-weight: 500;
-        }
-        
-        .result-item {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 16px;
-            border: 1px solid #eef0f2;
-            transition: box-shadow 0.2s ease;
-        }
-        .result-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        
+        body { background-color: #f8f9fa; }
+        .search-header { background: white; padding: 20px 0; border-bottom: 1px solid #dee2e6; }
+        .search-input { border-radius: 12px 0 0 12px !important; background-color: #f1f3f4; border: none; padding: 12px 20px; }
+        .search-btn { border-radius: 0 12px 12px 0 !important; padding: 0 30px; }
+        .result-item { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; border: 1px solid #eef0f2; }
         .result-title { color: #1a0dab; font-size: 1.25rem; text-decoration: none; font-weight: 500; }
-        .result-title:hover { text-decoration: underline; }
-        .result-snippet { color: #4d5156; margin-top: 8px; line-height: 1.58; }
-        .result-url { color: #70757a; font-size: 0.875rem; margin-top: 8px; display: block; }
+        .result-url { color: #70757a; font-size: 0.875rem; display: block; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -43,34 +20,32 @@
 <div id="app">
     <header class="search-header mb-4">
         <div class="container">
-            <h4 class="mb-3">🔍 Search Demo</h4>
-            <div class="input-group" style="max-width: 800px;">
-                <input 
-                    type="text" 
-                    v-model="searchQuery" 
-                    @keyup.enter="performSearch"
-                    class="form-control search-input" 
-                    placeholder="Type your search here..."
-                >
-                <button @click="performSearch" class="btn btn-primary search-btn">Search</button>
+            <h4 class="mb-3">🔍 Landmark Search Demo</h4>
+            <div class="input-group">
+                <input type="text" v-model="query" @keyup.enter="fetchResults" class="form-control search-input" placeholder="Search...">
+                <button @click="fetchResults" class="btn btn-primary search-btn">Search Landmarks</button>
             </div>
         </div>
     </header>
 
-    <main class="container" style="max-width: 800px;">
-        <div v-if="loading" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
+    <main class="container">
+        <div v-if="error" class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+
+        <div v-if="loading" class="text-center py-4">
+            <div class="spinner-border text-primary"></div>
         </div>
 
         <div v-else>
-            <div v-for="result in results" :key="result.id" class="result-item">
-                <a :href="result.url" class="result-title">{{ result.title }}</a>
-                <p class="result-snippet">{{ result.snippet }}</p>
-                <span class="result-url">{{ result.url }}</span>
+            <div v-for="article in articles" :key="article.id" class="result-item">
+                <a :href="article.pageUrl" target="_blank" class="result-title">{{ article.title }}</a>
+                <p class="mt-2 text-secondary">{{ article.content }}</p>
+                <span class="result-url"><a :href="article.pageUrl" target="_blank" class="result-title">{{ article.pageUrl }}</a></span>
             </div>
             
-            <div v-if="results.length === 0 && hasSearched" class="text-center text-muted py-5">
-                No results found for "{{ searchQuery }}".
+            <div v-if="articles.length === 0 && hasSearched && !error" class="text-center text-muted">
+                No results found.
             </div>
         </div>
     </main>
@@ -84,9 +59,10 @@
 
     createApp({
         setup() {
-            const searchQuery = ref('');
-            const results = ref([]);
+            const query = ref('');
+            const articles = ref([]);
             const loading = ref(false);
+            const error = ref(null);
             const hasSearched = ref(false);
 
             const performSearch = async () => {
