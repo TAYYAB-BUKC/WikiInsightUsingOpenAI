@@ -65,43 +65,34 @@
             const error = ref(null);
             const hasSearched = ref(false);
 
-            const performSearch = async () => {
-                if (!searchQuery.value.trim()) return;
-                
+            const fetchResults = async () => {
+                if (!query.value.trim()) {
+                    error.value = "Please enter a search term.";
+                    return;
+                }
+
                 loading.value = true;
+                error.value = null;
                 hasSearched.value = true;
 
                 try {
-                    // Simulating an API call with timeout
-                    // In a real app, replace with: await axios.get('your-api-url', { params: { q: searchQuery.value } })
-                    await new Promise(resolve => setTimeout(resolve, 600)); 
-                    
-                    // Mock data matching the "Eiffel Tower" style in your image
-                    results.value = [
-                        {
-                            id: 1,
-                            title: "Eiffel Tower",
-                            snippet: "The Eiffel Tower (EYE-fəl; French: Tour Eiffel) is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel...",
-                            url: "https://en.wikipedia.org/wiki/Eiffel_Tower"
-                        },
-                        {
-                            id: 2,
-                            title: "Statue of Liberty",
-                            snippet: "The Statue of Liberty (Liberty Enlightening the World; French: La Liberté éclairant le monde) is a colossal neoclassical sculpture on Liberty Island in New York Harbor...",
-                            url: "https://en.wikipedia.org/wiki/Statue_of_Liberty"
-                        }
-                    ];
-                } catch (error) {
-                    console.error("Search failed", error);
+                    const response = await axios.get(`http://localhost:5000/api/search`, {
+                        params: { query: query.value }
+                    });
+                    articles.value = response.data;
+                } catch (err) {
+                    console.log("err");
+                    console.log(err);
+                    error.value = err.response?.data?.error || "Unable to connect to the server.";
+                    articles.value = [];
                 } finally {
                     loading.value = false;
                 }
             };
 
-            return { searchQuery, results, loading, hasSearched, performSearch };
+            return { query, articles, loading, error, hasSearched, fetchResults };
         }
     }).mount('#app');
 </script>
-
 </body>
 </html>
