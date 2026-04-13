@@ -9,3 +9,6 @@ var app = builder.Build();
 
 // var indexingService = app.Services.GetRequiredService<IndexingService>();
 // await indexingService.BuildArticleIndex(SourceData.LandmarkNames);
+
+app.UseCors("FrontendCors");
+app.Run();
