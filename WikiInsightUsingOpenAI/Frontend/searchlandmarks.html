@@ -40,7 +40,7 @@
         <div v-else>
             <div v-for="article in articles" :key="article.id" class="result-item">
                 <a :href="article.pageUrl" target="_blank" class="result-title">{{ article.title }}</a>
-                <p class="mt-2 text-secondary">{{ article.content }}</p>
+                <p class="mt-2 text-secondary">{{ truncateText(article.content, 50) }}</p>
                 <span class="result-url"><a :href="article.pageUrl" target="_blank" class="result-title">{{ article.pageUrl }}</a></span>
             </div>
             
@@ -89,8 +89,15 @@
                     loading.value = false;
                 }
             };
+            
+            const truncateText = (text, wordLimit) => {
+                if (!text) return '';
+                const words = text.split(' ');
+                if (words.length <= wordLimit) return text;
+                return words.slice(0, wordLimit).join(' ') + '...';
+            };
 
-            return { query, articles, loading, error, hasSearched, fetchResults };
+            return { query, articles, loading, error, hasSearched, fetchResults, truncateText };
         }
     }).mount('#app');
 </script>
