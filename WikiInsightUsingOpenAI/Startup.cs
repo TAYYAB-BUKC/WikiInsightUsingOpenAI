@@ -37,6 +37,7 @@ public static class Startup
         builder.Services.AddSingleton<IndexingService>();
         builder.Services.AddSingleton<WikiService>();
         builder.Services.AddSingleton<ArticleStoreService>();
+        builder.Services.AddSingleton<VectorSearchService>();
 
         builder.Services.AddCors(options =>
         {
