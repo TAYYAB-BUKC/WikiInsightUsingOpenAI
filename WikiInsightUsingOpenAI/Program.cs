@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using WikiInsightUsingOpenAI;
 using WikiInsightUsingOpenAI.Services;
@@ -15,7 +16,7 @@ var app = builder.Build();
 app.UseCors("FrontendCors");
 
 // GET / api/search?query=...
-app.MapGet("/api/search", async (string query, VectorSearchService vectorSearchService) =>
+app.MapGet("/api/search", async (string query, [FromServices] VectorSearchService vectorSearchService) =>
 {
     var results = await vectorSearchService.FindTopKArticles(query, top);
     return Results.Ok(results);
