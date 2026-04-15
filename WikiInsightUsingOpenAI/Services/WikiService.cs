@@ -5,7 +5,7 @@ using WikiInsightUsingOpenAI.Models;
 
 namespace WikiInsightUsingOpenAI.Services;
 
-public class WikiService
+public partial class WikiService
 {
     private readonly HttpClient client;
     private readonly string API_BASE_URL = "https://en.wikipedia.org/w/api.php";
