@@ -71,4 +71,23 @@ public class ArticleChunkStoreService
         conn.Close();
         return articleChunks;
     }
+
+    public void SaveArticleChunk(ArticleChunk articleChunk)
+    {
+        using var conn = new SqliteConnection($"Data Source={DbFile}");
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT OR REPLACE INTO TBL_ArticleChunks
+            (Id, Title, Section, ChunkIndex, Content, SourcePageUrl)
+            VALUES ($id, $title, $section, $chunkIndex, $content, $sourcePageUrl)";
+        cmd.Parameters.AddWithValue("$id", articleChunk.Id);
+        cmd.Parameters.AddWithValue("$title", articleChunk.Title);
+        cmd.Parameters.AddWithValue("$section", articleChunk.Section);
+        cmd.Parameters.AddWithValue("$chunkIndex", articleChunk.ChunkIndex);
+        cmd.Parameters.AddWithValue("$content", articleChunk.Content);
+        cmd.Parameters.AddWithValue("$sourcePageUrl", articleChunk.SourcePageUrl);
+        cmd.ExecuteNonQuery();
+        conn.Close();
+    }
 }
