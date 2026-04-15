@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using WikiInsightUsingOpenAI.Models;
 
 namespace WikiInsightUsingOpenAI.Services;
 
@@ -23,5 +24,51 @@ public class ArticleChunkStoreService
             )";
         cmd.ExecuteNonQuery();
         conn.Close();
+    }
+
+    public List<ArticleChunk> GetArticleChunks(IEnumerable<string> ids)
+    {
+        var idList = ids?.Distinct().ToList() ?? [];
+        if (idList.Count == 0) return [];
+
+        using var conn = new SqliteConnection($"Data Source={DbFile}");
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        var paramNames = new List<string>(idList.Count);
+        for (int i = 0; i < idList.Count; i++)
+        {
+            var p = "$p" + i;
+            paramNames.Add(p);
+            cmd.Parameters.AddWithValue(p, idList[i]);
+        }
+
+        var orderByCase =
+            "CASE Id " +
+            string.Join(" ", idList.Select((id, i) => $"WHEN $p{i} THEN {i}")) +
+            " END";
+
+        cmd.CommandText = $@"
+            SELECT Id, Title, Section, ChunkIndex, Content, SourcePageUrl
+            FROM TBL_ArticleChunks
+            WHERE Id IN ({string.Join(", ", paramNames)})
+            ORDER BY {orderByCase}";
+
+        var articleChunks = new List<ArticleChunk>();
+        using var reader = cmd.ExecuteReader();
+
+        while (reader.Read())
+        {
+            articleChunks.Add(new ArticleChunk(
+                Id: reader.GetString(0),
+                Title: reader.GetString(1),
+                Section: reader.GetString(2),
+                ChunkIndex: reader.GetInt32(3),
+                Content: reader.GetString(4),
+                SourcePageUrl: reader.GetString(5)
+            ));
+        }
+
+        conn.Close();
+        return articleChunks;
     }
 }
