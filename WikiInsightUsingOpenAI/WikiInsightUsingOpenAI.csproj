@@ -22,4 +22,7 @@
     <PackageReference Include="Pinecone.Client" Version="4.0.2" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SKEXP0050</NoWarn>
+  </PropertyGroup>
 </Project>
