@@ -1,9 +1,7 @@
 using Microsoft.SemanticKernel.Text;
-using WikiInsight.Models;
 using WikiInsightUsingOpenAI.Models;
-using WikiInsightUsingOpenAI.Services;
 
-namespace WikiInsight.Service;
+namespace WikiInsightUsingOpenAI.Services;
 
 public class ArticleSplitterService(int MaxTokensPerChunk = 300, int OverlapTokens = 60)
 {
