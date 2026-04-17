@@ -38,6 +38,8 @@ public static class Startup
         builder.Services.AddSingleton<WikiService>();
         builder.Services.AddSingleton<ArticleStoreService>();
         builder.Services.AddSingleton<VectorSearchService>();
+        builder.Services.AddSingleton<ArticleChunkStoreService>();
+        builder.Services.AddSingleton<ArticleSplitterService>();
 
         builder.Services.AddCors(options =>
         {
