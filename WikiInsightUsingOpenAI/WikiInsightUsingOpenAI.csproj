@@ -10,6 +10,7 @@
   <ItemGroup>
     <Folder Include="Frontend\" />
     <Folder Include="Models\" />
+    <Folder Include="Prompts\" />
     <Folder Include="Services\" />
   </ItemGroup>
 
