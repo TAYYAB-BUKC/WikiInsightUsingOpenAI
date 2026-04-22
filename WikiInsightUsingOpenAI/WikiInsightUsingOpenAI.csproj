@@ -12,6 +12,9 @@
     <Folder Include="Models\" />
     <Folder Include="Prompts\" />
     <Folder Include="Services\" />
+    <None Include="Prompts\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 <ItemGroup>
