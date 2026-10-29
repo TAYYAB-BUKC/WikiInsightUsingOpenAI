@@ -2,6 +2,8 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using OpenAI.Chat;
 using OpenAI.Embeddings;
 using Pinecone;
 using WikiInsightUsingOpenAI.Services;
@@ -41,6 +43,19 @@ public static class Startup
         builder.Services.AddSingleton<ArticleChunkStoreService>();
         builder.Services.AddSingleton<ArticleSplitterService>();
         builder.Services.AddSingleton<PromptService>();
+
+        builder.Services.AddLogging(logging => logging.AddConsole().SetMinimumLevel(LogLevel.Information));
+        builder.Services.AddSingleton<ILoggerFactory>(l => LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information)));
+        builder.Services.AddSingleton<IChatClient>(chatClient =>
+        {
+            var loggerFactory = chatClient.GetRequiredService<ILoggerFactory>();
+            var openAIChatClient = new OpenAI.Chat.ChatClient("gpt-4o-mini", openAIKey).AsIChatClient();
+            return new ChatClientBuilder(openAIChatClient)
+            .UseLogging(loggerFactory)
+            .UseFunctionInvocation(loggerFactory, l => l.IncludeDetailedErrors = true)
+            .Build(chatClient);
+        });
+        builder.Services.AddSingleton<RagQuestionAnswerService>();
 
         builder.Services.AddCors(options =>
         {
