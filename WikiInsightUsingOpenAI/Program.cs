@@ -31,4 +31,10 @@ app.MapGet("/api/searchfullarticle", async (string query, [FromServices] VectorS
     return Results.Ok(results);
 });
 
+app.MapGet("/api/ask", async (string question, [FromServices] RagQuestionAnswerService ragQuestionAnswerService) =>
+{
+    var result = await ragQuestionAnswerService.AnswerQuestion(question);
+    return Results.Ok(result);
+});
+
 app.Run();
