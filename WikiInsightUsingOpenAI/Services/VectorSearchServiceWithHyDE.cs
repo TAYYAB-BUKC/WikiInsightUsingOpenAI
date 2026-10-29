@@ -10,7 +10,7 @@ public class VectorSearchServiceWithHyDE(EmbeddingService embeddingService, Inde
     {
         var systemPrompt = "You are a helpful assistant that generates a hypothesis based on the user's question. The hypothesis should be concise, relevant, and provide a potential answer or explanation to the question. Please provide the hypothesis in a 3-6 sentence.";
 
-        var userPrompt = PromptService.Prompts["RAG_SystemPrompt"]?.Replace("{question}", question);
+        var userPrompt = PromptService.Prompts["HYDE_Prompt"]?.Replace("{question}", question);
 
         var messages = (new[] {
             new ChatMessage(ChatRole.System, systemPrompt),
