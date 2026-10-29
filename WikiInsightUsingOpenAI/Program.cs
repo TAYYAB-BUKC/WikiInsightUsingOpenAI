@@ -37,4 +37,10 @@ app.MapGet("/api/ask", async (string question, [FromServices] RagQuestionAnswerS
     return Results.Ok(result);
 });
 
+app.MapGet("/api/askwithHYDE", async (string question, [FromServices] RagQuestionAnswerService ragQuestionAnswerService) =>
+{
+    var result = await ragQuestionAnswerService.AnswerQuestionUsingHYDE(question);
+    return Results.Ok(result);
+});
+
 app.Run();
