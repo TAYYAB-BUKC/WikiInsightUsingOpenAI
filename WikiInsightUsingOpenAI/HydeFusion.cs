@@ -37,4 +37,55 @@ public static class HydeFusion
             .Select(kvp => new SearchHit(kvp.Key, kvp.Value)) // Score holds the fused RRF score
             .ToList();
     }
+
+    public static List<SearchHit> MaximalMarginalRelevance(
+        IReadOnlyList<SearchHit> candidates,
+        Func<string, string, double> docSim,
+        double lambda = 0.7,
+        int topK = 5)
+    {
+        if (candidates == null || candidates.Count == 0 || topK <= 0)
+            return new List<SearchHit>();
+
+        // Work on a mutable pool of remaining items; we only need Id + query-sim
+        var remaining = candidates
+            .DistinctBy(c => c.Id)            // safety: drop accidental duplicates by Id
+            .OrderByDescending(c => c.Score)  // good initialization order (optional)
+            .ToList();
+
+        var selected = new List<SearchHit>(capacity: Math.Min(topK, remaining.Count));
+
+        while (selected.Count < topK && remaining.Count > 0)
+        {
+            SearchHit best = null!;
+            double bestMmr = double.NegativeInfinity;
+
+            foreach (var cand in remaining)
+            {
+                // Diversity penalty: max similarity to any already selected doc
+                double redundancy = 0.0;
+                if (selected.Count > 0)
+                {
+                    redundancy = selected
+                        .Select(s => docSim(cand.Id, s.Id))
+                        .DefaultIfEmpty(0.0)
+                        .Max();
+                }
+
+                // MMR score combines query relevance (cand.Score) and redundancy
+                double mmr = lambda * cand.Score - (1.0 - lambda) * redundancy;
+
+                if (mmr > bestMmr)
+                {
+                    bestMmr = mmr;
+                    best = cand;
+                }
+            }
+
+            selected.Add(best);
+            remaining.RemoveAll(c => c.Id == best.Id);
+        }
+
+        return selected;
+    }
 }
