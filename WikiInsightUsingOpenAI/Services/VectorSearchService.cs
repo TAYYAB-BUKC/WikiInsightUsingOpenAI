@@ -65,4 +65,6 @@ public class VectorSearchService(EmbeddingService embeddingService, IndexClient 
 
         return orderedArticles;
     }
+
+    public async Task<List<ArticleChunk>> FindInDatabase(string query) => await FindTopKArticleChunks(query, 5);
 }

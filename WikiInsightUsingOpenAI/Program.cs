@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using WikiInsightUsingOpenAI;
 using WikiInsightUsingOpenAI.Services;
@@ -41,6 +42,19 @@ app.MapGet("/api/askwithHYDE", async (string question, [FromServices] RagQuestio
 {
     var result = await ragQuestionAnswerService.AnswerQuestionUsingHYDE(question);
     return Results.Ok(result);
+});
+
+app.MapPost("/chat", async (
+    List<ChatMessage> messages,
+    IChatClient client,
+    ChatOptions chatOptions) =>
+{
+    var withSystemPrompt = (new[] { new ChatMessage(ChatRole.System, PromptService.Prompts["ChatBotSystemPrompt"]) })
+                            .Concat(messages)
+                            .ToList();
+
+    var response = await client.GetResponseAsync(withSystemPrompt, chatOptions);
+    return Results.Ok(response.Messages);
 });
 
 app.Run();

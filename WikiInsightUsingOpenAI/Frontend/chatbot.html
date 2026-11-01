@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot Demo</title>
+    <!-- Tailwind (Play CDN) for utility classes used below -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 from CDN (includes the template compiler, so no build step) -->
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.js"></script>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+      }
+      [v-cloak] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" v-cloak>
+      <div class="min-h-screen flex flex-col bg-neutral-100 text-neutral-900">
+        <header class="sticky top-0 z-10 bg-white border-b">
+          <div class="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
+            <h1 class="text-lg font-semibold">🤖 Chatbot Demo</h1>
+            <button @click="clearChat" :disabled="isSending">Clear Chat</button>
+          </div>
+        </header>
+
+        <main class="flex-1">
+          <div class="mx-auto max-w-3xl px-4 py-6">
+            <div v-if="visibleMessages.length === 0" class="text-center text-neutral-500 py-16">
+              Start a conversation below.
+            </div>
+            <ul v-else>
+              <li
+                v-for="(m, i) in visibleMessages"
+                :key="i"
+                class="flex items-start gap-2 mb-3"
+                :class="{ 'flex-row-reverse': m.role !== 'user' }"
+              >
+                <div
+                  class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm text-white"
+                  :class="m.role === 'user' ? 'bg-blue-600' : 'bg-green-600'"
+                >
+                  {{ m.role === "user" ? "U" : "A" }}
+                </div>
+                <div
+                  class="max-w-[75%] min-w-0 rounded-2xl px-4 py-2 shadow-sm whitespace-pre-wrap break-words"
+                  :class="m.role === 'user' ? 'bg-white rounded-tl-sm' : 'bg-green-100 rounded-tr-sm'"
+                  v-html="renderMessageHtml(m)"
+                ></div>
+              </li>
+              <li v-if="isSending" class="flex flex-row-reverse items-start gap-2 mb-3">
+                <div class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm text-white bg-green-600">
+                  A
+                </div>
+                <div class="rounded-2xl rounded-tr-sm px-4 py-2 shadow-sm bg-green-100 text-neutral-500 animate-pulse">
+                  Typing…
+                </div>
+              </li>
+              <li ref="bottomRef"></li>
+            </ul>
+            <div v-if="error" style="color: red">Error: {{ error }}</div>
+          </div>
+        </main>
+
+        <footer class="sticky bottom-0 bg-white border-t">
+          <div class="mx-auto max-w-3xl px-4 py-4">
+            <form @submit.prevent="sendMessage" class="flex gap-2 items-end">
+              <textarea
+                rows="3"
+                placeholder="Type a message…"
+                v-model="input"
+                @keydown="onKeyDown"
+                class="flex-1 border rounded p-2"
+              ></textarea>
+              <button
+                type="submit"
+                :disabled="isSending || !input.trim()"
+                class="px-4 py-2 rounded bg-blue-600 text-white disabled:bg-gray-300"
+              >
+                {{ isSending ? "Sending…" : "Send" }}
+              </button>
+            </form>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <script>
+      const { createApp, ref, computed, watch } = Vue;
+
+      function escapeHtml(unsafe) {
+        return String(unsafe)
+          .replaceAll(/&/g, "&amp;")
+          .replaceAll(/</g, "&lt;")
+          .replaceAll(/>/g, "&gt;")
+          .replaceAll(/\"/g, "&quot;")
+          .replaceAll(/'/g, "&#039;");
+      }
+
+      // Very simple markdown link support: [text](url) or [text] (url)
+      function renderMarkdownLinks(escapedText) {
+        const mdLink = /\[([^\]]+)\]\s*\((https?:\/\/[^\s)]+)\)/g;
+        return escapedText.replace(mdLink, (m, text, href) => {
+          const safeHref = href.replaceAll('"', "%22");
+          return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">${text}</a>`;
+        });
+      }
+
+      function renderMessageHtml(msg) {
+        const raw = getTextFromMessage(msg);
+        const escaped = escapeHtml(raw);
+        return renderMarkdownLinks(escaped);
+      }
+
+      function getTextFromMessage(msg) {
+        if (!msg) return "";
+        const blocks = Array.isArray(msg.contents)
+          ? msg.contents
+          : msg.content
+          ? [{ $type: "text", text: String(msg.content) }]
+          : [];
+        return blocks
+          .filter(
+            (b) => b && (b.$type === "text" || b.type === "text") && typeof b.text === "string"
+          )
+          .map((b) => b.text)
+          .join("\n")
+          .trim();
+      }
+
+      function isRenderable(msg) {
+        if (msg.role !== "user" && msg.role !== "assistant") return false;
+        return getTextFromMessage(msg).length > 0;
+      }
+
+      function toOpenAIMsg(msg) {
+        if (!msg) return msg;
+        if (Array.isArray(msg.contents)) return msg;
+        if (typeof msg.content === "string" && msg.content.trim().length > 0) {
+          return {
+            role: msg.role,
+            contents: [{ $type: "text", text: msg.content }],
+          };
+        }
+        // default empty
+        return { role: msg.role, contents: [] };
+      }
+
+      createApp({
+        setup() {
+          const messages = ref([]);
+          const input = ref("");
+          const isSending = ref(false);
+          const error = ref(null);
+          const bottomRef = ref(null);
+
+          // flush: "post" so the new message is in the DOM before scrolling
+          watch(
+            () => messages.value.length,
+            () => bottomRef.value?.scrollIntoView({ behavior: "smooth" }),
+            { flush: "post" }
+          );
+
+          const visibleMessages = computed(() => messages.value.filter(isRenderable));
+
+          async function sendMessage() {
+            if (!input.value.trim() || isSending.value) return;
+            error.value = null;
+
+            const userMsg = {
+              role: "user",
+              contents: [
+                {
+                  $type: "text",
+                  text: input.value.trim(),
+                },
+              ],
+            };
+            const nextHistory = [...messages.value, userMsg];
+            messages.value = nextHistory;
+            input.value = "";
+            isSending.value = true;
+
+            try {
+              const res = await fetch("http://localhost:5000/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(nextHistory.map(toOpenAIMsg)),
+              });
+              if (!res.ok) throw new Error("HTTP " + res.status);
+              // Be tolerant: backend may return
+              // - an array of messages
+              // - an object with { messages: [...] }
+              // - a single message object
+              // - plain text
+              const contentType = res.headers.get("content-type") || "";
+              if (contentType.includes("application/json")) {
+                const data = await res.json();
+                const msgs = Array.isArray(data)
+                  ? data
+                  : Array.isArray(data?.messages)
+                  ? data.messages
+                  : data && data.role
+                  ? [data]
+                  : [];
+                if (msgs.length === 0) throw new Error("Bad response");
+                messages.value = [...messages.value, ...msgs];
+              } else {
+                const text = await res.text();
+                if (text && text.trim().length) {
+                  messages.value = [
+                    ...messages.value,
+                    { role: "assistant", contents: [{ $type: "text", text }] },
+                  ];
+                } else {
+                  throw new Error("Empty response");
+                }
+              }
+            } catch (err) {
+              console.error(err);
+              error.value = err.message;
+              messages.value = [
+                ...messages.value,
+                {
+                  role: "assistant",
+                  contents: [{ $type: "text", text: "Sorry—something went wrong." }],
+                },
+              ];
+            } finally {
+              isSending.value = false;
+            }
+          }
+
+          function onKeyDown(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          }
+
+          function clearChat() {
+            messages.value = [];
+            error.value = null;
+          }
+
+          return {
+            input,
+            isSending,
+            error,
+            bottomRef,
+            visibleMessages,
+            renderMessageHtml,
+            sendMessage,
+            onKeyDown,
+            clearChat,
+          };
+        },
+      }).mount("#root");
+    </script>
+  </body>
+</html>

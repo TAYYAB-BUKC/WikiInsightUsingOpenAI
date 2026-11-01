@@ -57,6 +57,11 @@ public static class Startup
         });
         builder.Services.AddSingleton<RagQuestionAnswerService>();
 
+        builder.Services.AddTransient<ChatOptions>(sp => new ChatOptions
+        {
+            Tools = FunctionRegistry.GetTools(sp).ToList(),
+        });
+
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("FrontendCors", policy =>
