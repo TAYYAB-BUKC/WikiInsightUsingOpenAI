@@ -44,6 +44,13 @@ app.MapGet("/api/askwithHYDE", async (string question, [FromServices] RagQuestio
     return Results.Ok(result);
 });
 
+app.MapGet("/api/askaboutyoutube", async (string question, [FromServices] RagQuestionAnswerService ragQuestionAnswerService) =>
+{
+    var result = await ragQuestionAnswerService.AnswerQuestionAboutYoutube(question);
+    return Results.Ok(result);
+});
+
+
 app.MapPost("/chat", async (
     List<ChatMessage> messages,
     IChatClient client,
